@@ -673,7 +673,9 @@ function activeTasksToday(){
 
 /* Un cliente "coincide" con una propiedad si comparten al menos un interés/grupo */
 function matchingClientsForProperty(prop){
-  return clients.filter(c => (c.groupIds||[]).some(gid => (prop.groupIds||[]).includes(gid)));
+  const tags = prop.groupIds || [];
+  if(tags.length === 0) return [];
+  return clients.filter(c => c.id !== prop.ownerId && tags.every(gid => (c.groupIds||[]).includes(gid)));
 }
 function matchingPropertiesForGroup(gid){
   return properties.filter(p => (p.groupIds||[]).includes(gid));
@@ -1800,8 +1802,14 @@ function renderPropertyCard(p){
           ${p.link ? `<p style="margin:6px 0;"><a class="contact-link" href="${escapeHtml(p.link)}" target="_blank" rel="noopener">Ver más ↗</a></p>` : ''}
           <div style="margin:8px 0 12px 0;">${(p.groupIds||[]).map(gid => groupBadgeHtml(gid)).join('') || '<span class="sub">Sin interés asignado</span>'}</div>
           ${matches.length === 0 ? `
-            <p class="sub" style="padding:6px 0;">Ningún cliente registrado coincide todavía con esta propiedad.</p>
+            <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--line);">
+              <h4 style="margin:0 0 4px 0; font-size:13.5px;">🧑‍🤝‍🧑 Clientes interesados en comprar</h4>
+              <p class="sub" style="padding:2px 0;">Ningún cliente registrado coincide todavía con esta propiedad.</p>
+            </div>
           ` : `
+            <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--line);">
+              <h4 style="margin:0 0 2px 0; font-size:13.5px;">🧑‍🤝‍🧑 Clientes interesados en comprar (${matches.length})</h4>
+              <p class="sub" style="margin:0 0 8px 0;">Según los intereses que les marcaste, esto no es el propietario — son otros clientes a quienes les podría interesar comprarla.</p>
             <div class="group-bulk-actions">
               ${matches.filter(c=>c.phone).length ? `<button class="btn btn-ghost" data-copypropertyphones="${p.id}">Copiar teléfonos (${matches.filter(c=>c.phone).length})</button>` : ''}
               ${matches.filter(c=>c.email).length ? `<a class="btn btn-ghost" style="text-decoration:none;display:inline-block;" href="mailto:?bcc=${encodeURIComponent(matches.filter(c=>c.email).map(c=>c.email).join(','))}&subject=${encodeURIComponent('Propiedad que te puede interesar: ' + (p.title||''))}">Enviar correo a todos (${matches.filter(c=>c.email).length})</a>` : ''}
@@ -1817,6 +1825,7 @@ function renderPropertyCard(p){
               </div>
             </div>
           `).join('')}
+            </div>
           `}
         </div>
       ` : ''}
